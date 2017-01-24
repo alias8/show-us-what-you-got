@@ -5,7 +5,8 @@ class Http {
         this.request = overrideRequest || request;
     }
 
-    get(url) {
+    get(url, callback) {
+        let self = this;
         let requestOptions = {
             url,
             headers: {
@@ -13,14 +14,12 @@ class Http {
             }
         };
 
-        return new Promise((resolve, reject) => {
-            this.request.get(requestOptions, (error, response, body) => {
-                if (!error && response.statusCode == 200) {
-                    resolve(JSON.parse(body));
-                } else {
-                    reject(JSON.stringify(response));
-                }
-            });
+        this.request.get(requestOptions, (error, response, body) => {
+            if (!error && response.statusCode == 200) {
+                callback(null, response);
+            } else {
+                callback(JSON.stringify(response), null);
+            }
         });
     }
 }

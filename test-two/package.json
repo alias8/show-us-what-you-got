@@ -29,5 +29,9 @@
     "request": "^2.79.0",
     "sinon": "^1.17.7",
     "sinon-as-promised": "^4.0.2"
+  },
+  "dependencies": {
+    "async": "^2.1.4",
+    "lodash": "^4.17.4"
   }
 }

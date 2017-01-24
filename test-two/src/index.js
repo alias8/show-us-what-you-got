@@ -6,15 +6,16 @@ const baseUrl = "https://api.github.com/";
 const organisationId = "facebook";
 const gitHubApiAuthToken = ""; //add your GitHub API OAuth key here to increase request limit
 
-let logger = new Logger();
 let http = new Http();
 
 let gitHubService = new GitHubService(baseUrl, http, gitHubApiAuthToken);
 
-gitHubService.getUsersForOrganisation(organisationId).then((users) => {
-    users.map((user) => {
-        logger.log("Username: " + user.login);
-    });
-}).catch((error) => {
-    logger.log("Error: " + error);
-});
+gitHubService.getUsersAndReposForOrganisation(organisationId, (error, results) => {
+    if (error) {
+        console.log(error);
+    } else {
+        results.map((user) => {
+            console.log("Username: " + user.login);
+        });
+    }
+})
