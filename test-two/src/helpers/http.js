@@ -18,7 +18,7 @@ class Http {
             if (!error && response.statusCode == 200) {
                 callback(null, response);
             } else {
-                callback(JSON.stringify(response), null);
+                callback(error, null);
             }
         });
     }

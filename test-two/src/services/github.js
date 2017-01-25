@@ -10,15 +10,27 @@ class GitHubService {
         if (this.apiAuthenticationToken !== "") {
             this.authenticationQueryString = "?access_token=" + this.apiAuthenticationToken;
         }
-        this.allReposUrl = [];
+        this.urlsToQuery = [];
     }
 
-    queryLength(url, callback) {
+    getAllUrls(url, callback) {
+        let self = this;
         this.http.get(url, (error, results) => {
             if (!error) {
-                let myRe = new RegExp(/page=(\d+)>; rel="last"/, "g");
-                let finalPage = Number(myRe.exec(results.headers.link)[1]);
-                callback(null, finalPage)
+                if (results.headers.link) { // multiple pages
+                    let myRe = new RegExp(/page=(\d+)>; rel="last"/, "g");
+                    let a = url;
+                    let finalPage = Number(myRe.exec(results.headers.link)[1]);
+                    self.urlsToQuery = this.generateAllUrls(url, finalPage)
+                    callback(null, null)
+                } else { // one page
+                    if (results.body !== "[]") { // at least one repo
+                        self.urlsToQuery = this.generateAllUrls(url, 1)
+                    } else { // no repos
+                        self.urlsToQuery = []; // nothing to query, move to next
+                    }
+                    callback(null, null)
+                }
             } else {
                 return callback(error, null)
             }
@@ -33,59 +45,83 @@ class GitHubService {
         return urlArray;
     }
 
-    getUserListForOrganisation(urlArray, callback) {
-        let asyncTasks = []; // https://api.github.com/users/3lvis/repos // https://api.github.com/organizations/69631/members?access_token=fa41c1adf3b7ae0b2f219e7ac7d2e1665a257058&page=1
-        urlArray.forEach((url, index) => {
+    getUserList(callback) {
+        let self = this;
+        let asyncTasks = [];
+        this.urlsToQuery.forEach((url, index) => {
             asyncTasks.push(this.http.get.bind(this.http, url));
         })
         async.parallel(asyncTasks, function (error, results) {
             if (!error) {
                 let c = results.map((value, index) => {
                     return JSON.parse(value.body).map((value, index) => {
-                        return value.login;
+                        return { username: value.login, id: value.id };
                     })
                 })
-                let d = _.flatten(c);
-                callback(null, d)
+                callback(null, _.flatten(c))
             } else {
                 return callback(error, null)
             }
         })
     }
 
-    getUsersAndReposForOrganisation(organisationId, callback) {
-        let url = "https://api.github.com/organizations/69631/members?access_token=fa41c1adf3b7ae0b2f219e7ac7d2e1665a257058";
-        this.queryLength(url, (error, results) => {
+    getUsersForOrganisation(organisationId, callback) {
+        let self = this;
+        let url = this.baseUrl + "orgs/" + organisationId + "/members" + this.authenticationQueryString;
+        let asyncTasks = [];
+        asyncTasks.push(this.getAllUrls.bind(this, url))
+        asyncTasks.push(this.getUserList.bind(this))
+        async.series(asyncTasks, (error, results) => {
             if (!error) {
-                let urlArray = this.generateAllUrls(url, results)
-                this.getUserListForOrganisation(urlArray, (error, results) => {
-                    if (!error) {
-                        
-                    } else {
-
-                    }
-                })
-                let c = 2;
+                callback(null, results[1])
             } else {
-                let b = 2;
+                return callback(error, null)
+            }
+        });
+    }
+
+    getRepoNamesForUserId(user, callback) {
+        let self = this;
+        let url = this.baseUrl + "users/" + user.username + "/repos" + this.authenticationQueryString;
+        let asyncTasks = [];
+        asyncTasks.push(this.getAllUrls.bind(this, url))
+        asyncTasks.push(this.getRepoList.bind(this))
+        async.series(asyncTasks, (error, results) => {
+            if (!error) {
+                callback(null, results[1])
+            } else {
+                return callback(error, null)
+            }
+        });
+
+
+
+
+    }
+
+
+
+    getRepoList(callback) {
+        let self = this;
+        let asyncTasks = [];
+        self.urlsToQuery.forEach((url, index) => {
+            asyncTasks.push(this.http.get.bind(this.http, url));
+        })
+        async.parallel(asyncTasks, function (error, results) {
+            if (!error) {
+                let c = results.map((value, index) => {
+                    return JSON.parse(value.body).map((value, index) => {
+                        return value.name;
+                    })
+                })
+                callback(null, _.flatten(c))
+            } else {
+                return callback(error, null)
             }
         })
-
-        // let self = this;
-        // let asyncTasks1 = []; // https://api.github.com/users/3lvis/repos // https://api.github.com/organizations/69631/members?access_token=fa41c1adf3b7ae0b2f219e7ac7d2e1665a257058&page=1
-        // asyncTasks1.push(this.http.get.bind(this.http, "https://api.github.com/users/3lvis/repos?access_token=fa41c1adf3b7ae0b2f219e7ac7d2e1665a257058"));
-        // async.parallel(asyncTasks1, function (error, results) {
-        //     if (!error) {
-        //         let flat = _.flatten(results)
-        //         self.allReposUrl = flat.map((user) => {
-        //             return user.repos_url;
-        //         })
-        //         callback(null, null)
-        //     } else {
-        //         return callback(error, null)
-        //     }
-        // })
     }
+
+
 
 
 }
