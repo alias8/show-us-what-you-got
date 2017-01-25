@@ -1,29 +1,43 @@
 import Logger from "./logger";
+import BossHog from "../bosshog";
 import sinon from "sinon";
 import { expect } from "chai";
 
-describe("logger", () => {
-    let logger;
-    let consoleLogSpy;
+describe("BossHog loop test", () => {
+    function printBossHogMessage(number) {
+        describe("number " + number, () => {
+            let bossHog;
+            let logger;
+            let consoleLogSpy;
+            let correctMessage = getCorrectMessage(number);
+            beforeEach(() => {
+                bossHog = new BossHog();
+                logger = new Logger();
+                consoleLogSpy = new sinon.spy(bossHog, "printMessage");
+            });
+            it("should log:" + correctMessage, () => {
+                const message = bossHog.printMessage(number);
+                expect(bossHog.printMessage.calledWith(number)).to.be.equal(true);
+                expect(message).to.equal(correctMessage);
+            });
 
-    beforeEach(() => {
-        logger = new Logger();
+        });
+    }
 
-        consoleLogSpy = new sinon.spy(console, "log");
-    });
+    for (let number = 1; number <= 100; number++) {
+        printBossHogMessage(number);
+    }
 
-    afterEach(() => {
-        consoleLogSpy.restore();
-    });
-
-    it("should log message", () => {
-        //Arrange
-        const message = "hello world";
-
-        //Act
-        logger.log(message);
-
-        //Assert
-        expect(console.log.calledWith(message)).to.be.equal(true);
-    });
+    function getCorrectMessage(number) {
+        if (number % 15 === 0) {
+            return "BossHog";
+        } else if (number % 5 === 0) {
+            return "Hog";
+        } else if (number % 3 === 0) {
+            return "Boss";
+        } else {
+            return number;
+        }
+    }
 });
+
