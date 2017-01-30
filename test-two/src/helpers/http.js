@@ -3,11 +3,9 @@ import request from "request";
 class Http {
     constructor(overrideRequest) {
         this.request = overrideRequest || request;
-        this.requestNumber = 0;
     }
 
-    get(url, callback) {
-        let self = this;
+    get(url) {
         let requestOptions = {
             url,
             headers: {
@@ -15,15 +13,14 @@ class Http {
             }
         };
 
-        this.request.get(requestOptions, (error, response, body) => {
-            this.requestNumber++;
-            console.log('request number ' + this.requestNumber);
-            if (!error && response.statusCode == 200) {
-                callback(null, response);
-            } else {
-                let parsedBody = JSON.parse(body)
-                callback(parsedBody.message, null);
-            }
+        return new Promise((resolve, reject) => {
+            this.request.get(requestOptions, (error, response, body) => {
+                if (!error && response.statusCode == 200) {
+                    resolve(response); // used to be resolve(JSON.parse(body));
+                } else {
+                    reject(JSON.stringify(response));
+                }
+            });
         });
     }
 }

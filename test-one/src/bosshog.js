@@ -13,7 +13,6 @@ class BossHog {
         } else {
             message = number;
         }
-        console.log(message);
         return message;
     }
 }

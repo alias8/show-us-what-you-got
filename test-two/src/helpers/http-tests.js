@@ -39,15 +39,15 @@ describe("http", () => {
 
     it("should return list of objects without error", (done) => {
         //Arrange
-        requestGetStub = sinon.stub(request, 'get').yields(null, { statusCode: 200 }, testBody);
+        requestGetStub = sinon.stub(request, 'get').yields(null, { statusCode: 200 }, testBody); // request.get method has been replaced with this stub function
 
-        http = new Http(request);
+        http = new Http(request); // http object now constructed with stub replacement
 
         //Act
-        var getPromise = http.get(testEndpoint);
+        var getPromise = http.get(testEndpoint); // the promise from the get function returns the arguments in the "yields" above
 
         //Assert
-        getPromise.should.eventually.deep.equal(JSON.parse(testBody)).notify(done);
+        getPromise.should.eventually.deep.equal({ statusCode: 200 }).notify(done);
     });
 
     it("should fail when http error occurs", (done) => {

@@ -9,8 +9,7 @@
             "request": "launch",
             "name": "Launch Program",
             "program": "${workspaceRoot}\\lib\\index.js",
-            "cwd": "${workspaceRoot}",
-            "sourceMaps": true
+            "cwd": "${workspaceRoot}"
         },
         {
             "type": "node",
